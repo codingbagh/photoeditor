@@ -179,7 +179,7 @@ class CollagesPage extends StatefulWidget {
 }
 
 class _CollagesPageState extends State<CollagesPage> {
-  List<File> _selectedImages = [];
+  final List<File> _selectedImages = [];
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -195,13 +195,14 @@ class _CollagesPageState extends State<CollagesPage> {
     }
   }
 
-  Widget _buildImage(File imageFile) {
-    final bytes = imageFile.readAsBytesSync();
-    final img.Image image = img.decodeImage(Uint8List.fromList(bytes))!;
-    return Image.memory(
-      Uint8List.fromList(img.encodePng(image)),
-      fit: BoxFit.cover,
-    );
+  Future<void> _saveCollage() async {
+    if (_selectedImages.isNotEmpty) {
+      try {
+        // Save collage functionality
+      } catch (e) {
+        print('Error saving collage to gallery: $e');
+      }
+    }
   }
 
   @override
@@ -225,7 +226,10 @@ class _CollagesPageState extends State<CollagesPage> {
                   onTap: () {
                     // Handle image tap
                   },
-                  child: _buildImage(_selectedImages[index]),
+                  child: Image.file(
+                    _selectedImages[index],
+                    fit: BoxFit.cover,
+                  ),
                 );
               },
             ),
@@ -236,6 +240,10 @@ class _CollagesPageState extends State<CollagesPage> {
               ElevatedButton(
                 onPressed: () => _pickImage(ImageSource.gallery),
                 child: Text('Add Image'),
+              ),
+              ElevatedButton(
+                onPressed: _saveCollage,
+                child: Text('Save Collage'),
               ),
               ElevatedButton(
                 onPressed: () {
