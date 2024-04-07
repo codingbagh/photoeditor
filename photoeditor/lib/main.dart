@@ -86,8 +86,10 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _saveImage() async {
     if (_imageFile != null) {
       try {
-        final result = await ImageGallerySaver.saveImage(
-            Uint8List.fromList(_imageFile!.readAsBytesSync()));
+        final image = img.decodeImage(_imageFile!.readAsBytesSync())!;
+        final filteredImage = applyFilter(image, _selectedFilter);
+        final bytes = Uint8List.fromList(img.encodePng(filteredImage)!);
+        final result = await ImageGallerySaver.saveImage(bytes);
         print('Image saved to gallery: $result');
       } catch (e) {
         print('Error saving image to gallery: $e');
