@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
-import 'package:path_provider/path_provider.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 void main() {
   runApp(const MyApp());
@@ -86,12 +86,11 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _saveImage() async {
     if (_imageFile != null) {
       try {
-        final directory = await getApplicationDocumentsDirectory();
-        final imagePath = '${directory.path}/filtered_image.png';
-        await _imageFile!.copy(imagePath);
-        print('Image saved successfully: $imagePath');
+        final result = await ImageGallerySaver.saveImage(
+            Uint8List.fromList(_imageFile!.readAsBytesSync()));
+        print('Image saved to gallery: $result');
       } catch (e) {
-        print('Error saving image: $e');
+        print('Error saving image to gallery: $e');
       }
     }
   }
