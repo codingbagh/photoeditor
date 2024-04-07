@@ -173,15 +173,81 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class CollagesPage extends StatelessWidget {
+class CollagesPage extends StatefulWidget {
+  @override
+  _CollagesPageState createState() => _CollagesPageState();
+}
+
+class _CollagesPageState extends State<CollagesPage> {
+  List<File> _selectedImages = [];
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final pickedFile = await ImagePicker().pickImage(source: source);
+      if (pickedFile != null) {
+        final File file = File(pickedFile.path);
+        setState(() {
+          _selectedImages.add(file);
+        });
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+    }
+  }
+
+  Widget _buildImage(File imageFile) {
+    final bytes = imageFile.readAsBytesSync();
+    final img.Image image = img.decodeImage(Uint8List.fromList(bytes))!;
+    return Image.memory(
+      Uint8List.fromList(img.encodePng(image)),
+      fit: BoxFit.cover,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Collages'),
       ),
-      body: Center(
-        child: Text('Collages Page'),
+      body: Column(
+        children: [
+          Expanded(
+            child: GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 4.0,
+                mainAxisSpacing: 4.0,
+              ),
+              itemCount: _selectedImages.length,
+              itemBuilder: (BuildContext context, int index) {
+                return GestureDetector(
+                  onTap: () {
+                    // Handle image tap
+                  },
+                  child: _buildImage(_selectedImages[index]),
+                );
+              },
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: () => _pickImage(ImageSource.gallery),
+                child: Text('Add Image'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _selectedImages.clear();
+                  });
+                },
+                child: Text('Clear'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
