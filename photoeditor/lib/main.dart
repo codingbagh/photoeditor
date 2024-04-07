@@ -39,6 +39,20 @@ class _MyHomePageState extends State<MyHomePage> {
   final ImagePicker _picker = ImagePicker();
   List<String> _filters = ['No Filter', 'Grayscale', 'Sepia', 'Invert'];
   String _selectedFilter = 'No Filter';
+  int _currentIndex = 0;
+
+  void _onTabTapped(int index) {
+    if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => CollagesPage()),
+      );
+    } else {
+      setState(() {
+        _currentIndex = index;
+      });
+    }
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -140,6 +154,34 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        onTap: _onTabTapped,
+        currentIndex: _currentIndex,
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.edit),
+            label: 'Edit',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.photo_library),
+            label: 'Collages',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CollagesPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Collages'),
+      ),
+      body: Center(
+        child: Text('Collages Page'),
       ),
     );
   }
