@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'collages_page.dart';
+import 'text_on_picture_page.dart'; // Import the new module
 
 void main() {
   runApp(const MyApp());
@@ -43,16 +44,20 @@ class _MyHomePageState extends State<MyHomePage> {
   int _currentIndex = 0;
 
   void _onTabTapped(int index) {
-    if (index == 1) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => CollagesPage()),
-      );
-    } else {
-      setState(() {
-        _currentIndex = index;
-      });
-    }
+    setState(() {
+      _currentIndex = index;
+      if (_currentIndex == 1) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => CollagesPage()),
+        );
+      } else if (_currentIndex == 2) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => TextOnPicturePage()),
+        );
+      }
+    });
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -167,6 +172,10 @@ class _MyHomePageState extends State<MyHomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.photo_library),
             label: 'Collages',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.text_fields),
+            label: 'Text on Picture',
           ),
         ],
       ),
