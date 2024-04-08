@@ -1,9 +1,10 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'collages_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -166,94 +167,6 @@ class _MyHomePageState extends State<MyHomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.photo_library),
             label: 'Collages',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class CollagesPage extends StatefulWidget {
-  @override
-  _CollagesPageState createState() => _CollagesPageState();
-}
-
-class _CollagesPageState extends State<CollagesPage> {
-  final List<File> _selectedImages = [];
-
-  Future<void> _pickImage(ImageSource source) async {
-    try {
-      final pickedFile = await ImagePicker().pickImage(source: source);
-      if (pickedFile != null) {
-        final File file = File(pickedFile.path);
-        setState(() {
-          _selectedImages.add(file);
-        });
-      }
-    } catch (e) {
-      print('Error picking image: $e');
-    }
-  }
-
-  Future<void> _saveCollage() async {
-    if (_selectedImages.isNotEmpty) {
-      try {
-        // Save collage functionality
-      } catch (e) {
-        print('Error saving collage to gallery: $e');
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Collages'),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 4.0,
-                mainAxisSpacing: 4.0,
-              ),
-              itemCount: _selectedImages.length,
-              itemBuilder: (BuildContext context, int index) {
-                return GestureDetector(
-                  onTap: () {
-                    // Handle image tap
-                  },
-                  child: Image.file(
-                    _selectedImages[index],
-                    fit: BoxFit.cover,
-                  ),
-                );
-              },
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton(
-                onPressed: () => _pickImage(ImageSource.gallery),
-                child: Text('Add Image'),
-              ),
-              ElevatedButton(
-                onPressed: _saveCollage,
-                child: Text('Save Collage'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _selectedImages.clear();
-                  });
-                },
-                child: Text('Clear'),
-              ),
-            ],
           ),
         ],
       ),
