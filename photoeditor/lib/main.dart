@@ -1,183 +1,252 @@
-import 'dart:typed_data';
-import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_editor_plus/image_editor_plus.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:photoeditor/constants/constants.dart';
 import 'package:image/image.dart' as img;
-import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'collages_page.dart';
-import 'text_on_picture_page.dart'; // Import the new module
+import 'package:photoeditor/utils/show_dialogue.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Photo Editing App',
+      title: 'Grp 16 Image Editor',
       theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color.fromARGB(212, 180, 127, 227),
+        ),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Photo Editing'),
+      home: const MyHomePage(
+        title: 'Grp 16 Image Editor',
+      ),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
   final String title;
 
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  File? _imageFile;
-  final ImagePicker _picker = ImagePicker();
-  List<String> _filters = ['No Filter', 'Grayscale', 'Sepia', 'Invert'];
-  String _selectedFilter = 'No Filter';
-  int _currentIndex = 0;
+  Uint8List? originalImageData;
+  Uint8List? imageData;
+  int imageSelected = 0;
 
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-      if (_currentIndex == 1) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => CollagesPage()),
-        );
-      } else if (_currentIndex == 2) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => TextOnPicturePage()),
-        );
-      }
-    });
+  @override
+  void initState() {
+    super.initState();
+    loadAsset(AssetsConstants.placeholderLogo);
   }
 
-  Future<void> _pickImage(ImageSource source) async {
+  void loadAsset(String name) async {
+    var data = await rootBundle.load(name);
+    setState(
+      () {
+        imageData = data.buffer.asUint8List();
+      },
+    );
+  }
+
+  Future<Uint8List?> applyFilter(Uint8List? imageBytes) async {
+    if (imageBytes == null) return null;
+
+    final originalImage = img.decodeImage(imageBytes);
+    if (originalImage == null) return null;
+    final sepiaImage = img.sepia(originalImage);
+
+    return Uint8List.fromList(img.encodeJpg(sepiaImage));
+  }
+
+  Future<void> saveEditedImage(Uint8List editedImageData) async {
     try {
-      final pickedFile = await _picker.pickImage(source: source);
-      if (pickedFile != null) {
-        setState(() {
-          _imageFile = File(pickedFile.path);
-        });
-      }
-    } catch (e) {
-      print('Error picking image: $e');
+      final appDocDir = await getExternalStorageDirectory();
+      final filePath = '${appDocDir!.path}/edited_image.png';
+      final file = File(filePath);
+      await file.writeAsBytes(editedImageData);
+      showDialogBox(context, 'Image saved successfully to $filePath');
+    } on Exception catch (e) {
+      showDialogBox(context, "Image not saved: $e");
     }
   }
 
-  Widget _buildImage() {
-    if (_imageFile != null) {
-      final image = img.decodeImage(_imageFile!.readAsBytesSync())!;
-      final filteredImage = applyFilter(image, _selectedFilter);
-      final encodedImage = Uint8List.fromList(img.encodePng(filteredImage)!);
-      return Image.memory(
-        encodedImage,
-        height: 300,
-      );
-    } else {
-      return const Text(
-        'No image selected',
-        style: TextStyle(fontSize: 20),
-      );
-    }
-  }
+  Future getImage(ImageSource source) async {
+    final image = await ImagePicker().pickImage(source: source);
+    if (image == null) return;
 
-  img.Image applyFilter(img.Image image, String filter) {
-    switch (filter) {
-      case 'Grayscale':
-        return img.grayscale(image);
-      case 'Sepia':
-        return img.sepia(image);
-      case 'Invert':
-        return img.invert(image);
-      default:
-        return image;
-    }
-  }
-
-  Future<void> _saveImage() async {
-    if (_imageFile != null) {
-      try {
-        final image = img.decodeImage(_imageFile!.readAsBytesSync())!;
-        final filteredImage = applyFilter(image, _selectedFilter);
-        final bytes = Uint8List.fromList(img.encodePng(filteredImage)!);
-        final result = await ImageGallerySaver.saveImage(bytes);
-        print('Image saved to gallery: $result');
-      } catch (e) {
-        print('Error saving image to gallery: $e');
-      }
-    }
+    final imageTemporary = File(image.path);
+    setState(
+      () {
+        imageSelected = 1;
+        originalImageData = imageTemporary.readAsBytesSync();
+        imageData = imageTemporary.readAsBytesSync();
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.purple[100],
         title: Text(widget.title),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            _buildImage(),
-            const SizedBox(height: 20),
-            DropdownButton<String>(
-              value: _selectedFilter,
-              onChanged: (value) {
-                setState(() {
-                  _selectedFilter = value!;
-                });
-              },
-              items: _filters.map((filter) {
-                return DropdownMenuItem<String>(
-                  value: filter,
-                  child: Text(filter),
-                );
-              }).toList(),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(40.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                imageData != null
+                    ? SizedBox(
+                        height: 300,
+                        width: 300,
+                        child: Image.memory(imageData!),
+                      )
+                    : SizedBox(
+                        height: 300,
+                        width: 300,
+                        child: Image.asset('assets/images/Screenshot.png'),
+                      ),
+                const SizedBox(
+                  height: 20,
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => {
+                    getImage(ImageSource.gallery),
+                  },
+                  icon: const Icon(Icons.photo_library),
+                  label: const Text("Image From Gallery"),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => {
+                    getImage(ImageSource.camera),
+                  },
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text("Image From Camera"),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.all(5),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          try {
+                            if (imageSelected != 1) {
+                              throw Exception("Please select an image first");
+                            }
+                            final editedImage = await applyFilter(imageData);
+                            if (editedImage != null) {
+                              setState(
+                                () {
+                                  imageData = editedImage;
+                                },
+                              );
+                            }
+                          } catch (e) {
+                            showDialogBox(context, "$e");
+                          }
+                        },
+                        child: const Text("Apply a Filter"),
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.all(5),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          try {
+                            if (imageSelected != 1) {
+                              throw Exception("Please select an image first");
+                            }
+                            var editedImage = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ImageEditor(
+                                  image: imageData,
+                                ),
+                              ),
+                            );
+                            if (editedImage != null) {
+                              imageData = editedImage;
+                              setState(() {});
+                            }
+                          } catch (e) {
+                            showDialogBox(context, "$e");
+                          }
+                        },
+                        child: const Text("Full Image editor"),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.all(10),
+                      child: ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                            const Color.fromARGB(255, 133, 214, 230),
+                          ),
+                        ),
+                        onPressed: () async {
+                          try {
+                            if (imageSelected != 1) {
+                              throw Exception("Please select an image first");
+                            }
+                            await saveEditedImage(imageData!);
+                          } catch (e) {
+                            showDialogBox(context, "$e");
+                          }
+                        },
+                        child: const Text("Save"),
+                      ),
+                    ),
+                    Container(
+                      alignment: Alignment.topLeft,
+                      margin: const EdgeInsets.all(10),
+                      child: ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                            Color.fromARGB(255, 241, 86, 34),
+                          ),
+                        ),
+                        onPressed: () {
+                          try {
+                            if (imageSelected != 1) {
+                              throw Exception("Please select an image first");
+                            }
+                            imageData = originalImageData;
+                            setState(() {});
+                          } catch (e) {
+                            showDialogBox(context, "$e");
+                          }
+                        },
+                        child: const Text("Reset all changes"),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => _pickImage(ImageSource.gallery),
-              child: const Text('Select Image'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => _pickImage(ImageSource.camera),
-              child: const Text('Take Photo'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveImage,
-              child: const Text('Download Image'),
-            ),
-          ],
+          ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        onTap: _onTabTapped,
-        currentIndex: _currentIndex,
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.edit),
-            label: 'Edit',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.photo_library),
-            label: 'Collages',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.text_fields),
-            label: 'Text on Picture',
-          ),
-        ],
       ),
     );
   }

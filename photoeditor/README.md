@@ -1,16 +1,11 @@
-# photoeditor
+# A Flutter Photo Editor App
 
-A new Flutter project.
+I have made a photo editor app using ImagePicker package and image_editor_plus package. 
+I have used the following features in this app:
 
-## Getting Started
+- Add Image from Gallery or Camera
+- Apply Filters to the Image or Open the Image in the Editor
+- Save the Image to the Gallery
+- Reset the Image to the Original Image
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+My Video Explaining the App- https://drive.google.com/drive/folders/1AqbYuhBDwIxS6PgOrTRtxd8_oFdQQYpx?usp=sharing
