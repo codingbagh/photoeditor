@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_editor_plus/image_editor_plus.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
+
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+
 import 'package:photoeditor/constants/constants.dart';
 import 'package:image/image.dart' as img;
 import 'package:photoeditor/utils/show_dialogue.dart';
@@ -13,9 +15,8 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -26,15 +27,13 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const MyHomePage(
-        title: 'Grp 16 Image Editor',
-      ),
+      home: const MyHomePage(title: 'Grp 16 Image Editor'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  const MyHomePage({Key? key, required this.title}) : super(key: key);
   final String title;
 
   @override
@@ -54,11 +53,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void loadAsset(String name) async {
     var data = await rootBundle.load(name);
-    setState(
-      () {
-        imageData = data.buffer.asUint8List();
-      },
-    );
+    setState(() {
+      imageData = data.buffer.asUint8List();
+    });
   }
 
   Future<Uint8List?> applyFilter(Uint8List? imageBytes) async {
@@ -73,12 +70,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> saveEditedImage(Uint8List editedImageData) async {
     try {
-      final appDocDir = await getExternalStorageDirectory();
-      final filePath = '${appDocDir!.path}/edited_image.png';
-      final file = File(filePath);
-      await file.writeAsBytes(editedImageData);
-      showDialogBox(context, 'Image saved successfully to $filePath');
-    } on Exception catch (e) {
+      final result = await ImageGallerySaver.saveImage(editedImageData);
+      if (result != null && result.isNotEmpty) {
+        showDialogBox(context, 'Image saved successfully');
+      } else {
+        showDialogBox(context, 'Failed to save image');
+      }
+    } catch (e) {
       showDialogBox(context, "Image not saved: $e");
     }
   }
@@ -88,13 +86,11 @@ class _MyHomePageState extends State<MyHomePage> {
     if (image == null) return;
 
     final imageTemporary = File(image.path);
-    setState(
-      () {
-        imageSelected = 1;
-        originalImageData = imageTemporary.readAsBytesSync();
-        imageData = imageTemporary.readAsBytesSync();
-      },
-    );
+    setState(() {
+      imageSelected = 1;
+      originalImageData = imageTemporary.readAsBytesSync();
+      imageData = imageTemporary.readAsBytesSync();
+    });
   }
 
   @override
@@ -126,18 +122,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   height: 20,
                 ),
                 ElevatedButton.icon(
-                  onPressed: () => {
-                    getImage(ImageSource.gallery),
-                  },
+                  onPressed: () => getImage(ImageSource.gallery),
                   icon: const Icon(Icons.photo_library),
                   label: const Text("Image From Gallery"),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () => {
-                    getImage(ImageSource.camera),
-                  },
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text("Image From Camera"),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -152,11 +139,9 @@ class _MyHomePageState extends State<MyHomePage> {
                             }
                             final editedImage = await applyFilter(imageData);
                             if (editedImage != null) {
-                              setState(
-                                () {
-                                  imageData = editedImage;
-                                },
-                              );
+                              setState(() {
+                                imageData = editedImage;
+                              });
                             }
                           } catch (e) {
                             showDialogBox(context, "$e");
